@@ -40,7 +40,7 @@ async function main() {
   // app.use()
   // Define routes
   app.use("/api/users", userRoutes);
-  app.use(authentication);
+  // app.use(authentication);
   app.use("/api/libraries", libraryRoutes);
   app.use("/api/books", bookRoutes);
   app.use("/api", borrowRoutes);
