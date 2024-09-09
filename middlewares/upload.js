@@ -5,7 +5,7 @@ const path = require("path");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  storageBucket: process.env.STORAGE_BUCKET_ID, // storage bucket URL
+  storageBucket: "gs://library-b2e33.appspot.com", // storage bucket URL
 });
 
 // Firestore Storage bucket instance
