@@ -1,4 +1,3 @@
-
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const userSchema = require("../models/User.js");
@@ -10,16 +9,14 @@ const authentication = async (req, res, next) => {
       req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) {
-      return res.status(401).json({message : "Unauthorized request"} );
+      return res.status(401).json({ message: "Unauthorized request" });
     }
-
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
     const user = await userSchema
       .findById(decodedToken?._id)
       .select("-password -refreshToken");
     if (!user) {
-      return res.staus(401).json({message : "Invalid Access Token"} );
+      return res.staus(401).json({ message: "Invalid Access Token" });
     }
 
     req.user = user;
@@ -27,7 +24,7 @@ const authentication = async (req, res, next) => {
   } catch (error) {
     return res
       .status(401)
-      .json({message :error?.message || "Invalid access token" })
+      .json({ message: error?.message || "Invalid access token" });
   }
 };
 
