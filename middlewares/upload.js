@@ -7,7 +7,7 @@ const translate = require("@vitalets/google-translate-api");
 const bucketid = process.env.STORAGE_BUCKET_ID;
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  storageBucket: "gs://library-b2e33.appspot.com", // storage bucket URL
+  storageBucket: bucketid, // storage bucket URL
 });
 
 // Firestore Storage bucket instance
@@ -34,9 +34,7 @@ const upload = multer({
 
 // Helper function to upload the image to Firebase
 async function uploadImageToFirebase(file, libraryId) {
-  console.log(bucketid)
 
-  console.log(file)
   try {
     console.log("upload");
     // console.log(file);

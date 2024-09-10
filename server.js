@@ -91,14 +91,14 @@ async function main() {
 
   })
 
-  // app.use((err, req, res, next) => {
-  //   console.error(err.stack);
-  //   res.status(err.status || 500);
-  //   return res.status(err.status ).json({
-  //       message: err.message,
-  //       error: process.env.NODE_ENV === 'development' ? err : {}
-  //   });
-  //  });
+  app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(err.status || 500);
+    return res.status(err.status ).json({
+        message: err.message,
+        error: process.env.NODE_ENV === 'development' ? err : {}
+    });
+   });
 
   
   
@@ -109,7 +109,6 @@ async function main() {
 
   // Start the server
   const PORT = process.env.PORT || 8000;
-  console.log(process.env.PORT);
   app.listen(PORT, () => {
     console.log(`Server running at -> http://localhost:${PORT}`);
   });
