@@ -1,0 +1,46 @@
+{
+  "created": "{{field}} created successfully",
+
+  "serverError": "Server error",
+  "success": "successfully got",
+  "exists": "{{field}} already Exists",
+
+  "required": "{{field}} required",
+
+  "notFound": "Resource not found",
+  "invalidData": "Invalid data provided",
+
+  "authorNot": "Author not found",
+  "bookNot": "Book not found",
+  "libraryNot": "Library not found",
+
+  "bookCreated": "Book created successfully",
+  "bookUpdate": "Book Updated successfully",
+  "bookDeleted": "Book deleted successfully",
+  "bookExists": "Book already exists that bookid",
+
+
+  "libraryCreated": "Library created successfully",
+  "libraryUpdated": "library Updated successfully",
+  "libraryDeleted": "Library deleted successfully",
+
+  "unauthorized": "Unauthorized access",
+  "invalidToken": "Invalid Access Token ",
+  "refreshExpired": "refreshTokenExpired",
+  "loginRequired": "Login Required",
+  "errorRegister": "Something went wrong while registering",
+  "tokenRefresh": "Token refreshed succesfully",
+
+  "userExist": "User with email already exist",
+  "userCreated": "userCratedSuccesfully ",
+
+  "login": "login successfully",
+  "logout": "logout successfully",
+
+  "duplicateExist": "The {{field}} {{duplicateValue}} is already registered. Please use a different {{field}}",
+  "errorUpload": "Error in uploading images",
+  
+  "alreadyBorrow": "Book already Borrowed",
+  "borrowed": "succesfully borrowed",
+  "alreadyReturn": "you returned already"
+}

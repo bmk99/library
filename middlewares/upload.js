@@ -2,7 +2,9 @@ const admin = require("firebase-admin");
 const serviceAccount = require("../serviceAccountKey.json");
 const multer = require("multer");
 const path = require("path");
+const translate = require("@vitalets/google-translate-api");
 
+const bucketid = process.env.STORAGE_BUCKET_ID;
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: "gs://library-b2e33.appspot.com", // storage bucket URL
@@ -32,6 +34,9 @@ const upload = multer({
 
 // Helper function to upload the image to Firebase
 async function uploadImageToFirebase(file, libraryId) {
+  console.log(bucketid)
+
+  console.log(file)
   try {
     console.log("upload");
     // console.log(file);
@@ -51,6 +56,10 @@ async function uploadImageToFirebase(file, libraryId) {
     return signedUrl;
   } catch (error) {
     console.error(error.message);
+    console.log(error)
+    // throw new Error(error.message);
+    // const translationText = await translate(error.message ,{to : req.getLocale()})
+    return res.status(500).json({message : error.message})
   }
 }
 

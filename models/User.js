@@ -7,30 +7,36 @@ const userSchema = new Schema(
   {
     name: {
       type: String,
-      cast: "{value} is not a string",
       trim: true,
+      require:[true, "Name is Required"]
     },
     email: {
       type: String,
       required: true,
       trim: true,
-      unique : [true, "email already exist"]
+      unique: [true, "Email already exists"],
     },
     password: {
       type: String,
       required: [true, "Password is required"],
+      minlength: [6, "Password must be at least 6 characters long"], // Minimum length validation
     },
     role: {
       type: String,
       enum: ["admin", "user"],
       required: true,
-      message: "{value} is not supported",
       trim: true,
     },
     phone: {
       type: Number,
       required: true,
       trim: true,
+      validate: {
+        validator: function (v) {
+          return /^\d{10}$/.test(v);  // RegExp for exactly 10 digits
+        },
+        message: (props) => `${props.value} is not a valid 10-digit phone number!`,
+      },
     },
     address: {
       type: String,
@@ -44,6 +50,8 @@ const userSchema = new Schema(
     timestamps: true,
   }
 );
+
+
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
@@ -82,26 +90,6 @@ userSchema.methods.generateRefreshToken = function () {
   );
 };
 
-// userSchema.post("save", function (error, req,res, next) {
-//   if ((error.name = "MongoServerError" && error.code == 11000)) {
-//     const field = Object.keys(error.keyValue[0]);
-//     const duplicateValue = error.keyValue[field];
-//     const message = `${field} ${duplicateValue} is already regiseterd .please use different ${field}`;
-//     next(message);
-//   } else {
-//     next();
-//   }
-// });
 
-// userSchema.post("updateOne", function (error, doc, next) {
-//   if ((error.name = "MongoServerError" && error.code == 11000)) {
-//     const field = Object.keys(error.keyValue[0]);
-//     const duplicateValue = error.keyValue[field];
-//     const message = `${field} ${duplicateValue} is already regiseterd .please use different ${field}`;
-//     next(new Error(message));
-//   } else {
-//     next();
-//   }
-// });
 
 module.exports = mongoose.model("User", userSchema);

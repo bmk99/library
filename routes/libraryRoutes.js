@@ -20,7 +20,7 @@ router.use((req, res, next) => {
       console.log(req.user.role);
       next();
     } else {
-      return res.status(403).json({ messge: "No access " });
+      return res.status(403).json({ messge: res.__("unauthorized")});
     }
   } catch (error) {
     return res.status(500).json({ error: error });
@@ -32,7 +32,7 @@ router.param("libraryId", async (req, res, next) => {
   const id = req.params.libraryId;
   const library = await librarySchema.exists({_id : id});
   if (!library) {
-    return res.status(404).json({ message: "not found" });
+    return res.status(404).json({ message: res.__("notFound") });
   }
   next();
 });

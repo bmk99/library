@@ -1,45 +1,35 @@
 const booksSchema = require("../models/Books");
 const librarySchema = require("../models/Libraries");
 const userSchema = require("../models/User");
+const {translateTo} = require("../utils/Multilingul")
 const {
   uploadImageToFirebase,
   deleteImageFromFirebaseUrl,
 } = require("../middlewares/upload");
 
-exports.name = async (req, res) => {
-  const {} = req.body;
-  const {} = req.params;
-  const {} = req.query;
-  try {
-    if (true) {
-      return res.status().json({});
-    }
-
-    return res.status().json({});
-  } catch (error) {
-    return res.status().json({});
-  }
-};
 
 exports.createBook = async (req, res) => {
   const { bookId, name, authorId, fiction, libraryId, price } = req.body;
+  console.log(req.body)
 
   try {
     // Check if the book already exists
     const book = await booksSchema.exists({ bookId: bookId });
     if (book) {
-      return res.status(409).json({ message: "Book already exists." });
+      return res.status(409).json({ message: res.__("bookExists") });
     }
+    console.log(book)
 
     // Check if the author and library exist
     const author = await userSchema.exists({ _id: authorId });
     const library = await librarySchema.exists({ _id: libraryId });
 
     if (!author) {
-      return res.status(404).json({ message: "Author ID not found." });
+      return res.status(404).json({ message: res.__("authorNot") });
     }
     if (!library) {
-      return res.status(404).json({ message: "Library ID not found." });
+      console.log("library")
+      return res.status(404).json({ message: res.__("libraryNot") });
     }
 
     // Handle file uploads (if any)
@@ -51,9 +41,11 @@ exports.createBook = async (req, res) => {
         );
         images = uploadedImages; // Store the URLs of uploaded images
       } catch (error) {
+        console.log(error.message)
+        const translationText = translateTo(error) || res.__("serverError");
         return res
           .status(500)
-          .json({ message: "Error uploading images.", error: error.message });
+          .json({ message: `${res.__("errorUplaod")}--${translationText}` });
       }
     }
 
@@ -71,19 +63,22 @@ exports.createBook = async (req, res) => {
 
     return res
       .status(201)
-      .json({ message: "Book created successfully.", book: newBook });
+      .json({ message: res.__("bookCreated"), book: newBook });
   } catch (error) {
+    console.log(error)
     // Handle MongoDB duplicate key error
     if (error.name === "MongoServerError" && error.code === 11000) {
       const field = Object.keys(error.keyValue)[0];
       const duplicateValue = error.keyValue[field];
-      const message = `The ${field} '${duplicateValue}' is already registered. Please use a different ${field}.`;
-      return res.status(400).json({ message });
+      const message = res.__("duplicateExist", {
+        field: field,
+        duplicateValue: duplicateValue,
+      });      return res.status(400).json({ message });
     }
 
     // Catch any other server errors
-    return res.status(500).json({ message: error.message });
-  }
+    const translationText = translateTo(error) || res.__("serverError");
+    return res.status(500).json({ message: translationText });  }
 };
 
 exports.updateBook = async (req, res) => {
@@ -117,11 +112,11 @@ exports.updateBook = async (req, res) => {
           }
         ));
 
-    return res.status(201).json({ updatedBook });
+    return res.status(201).json({message : res.__("bookUpdate") , result : updatedBook });
   } catch (error) {
     console.log(error.message);
-    return res.status(500).json({ message: error.message });
-  }
+    const translationText = translateTo(error) || res.__("serverError");
+    return res.status(500).json({ message: translationText });  }
 };
 
 exports.getBook = async (req, res) => {
@@ -133,10 +128,10 @@ exports.getBook = async (req, res) => {
       .populate("borrower", "_id name role email")
       .populate("libraryId", "_id name");
 
-    return res.status(200).json({result : book });
+    return res.status(200).json({message : res.__("success"), result : book });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
+    const translationText = translateTo(error) || res.__("serverError");
+    return res.status(500).json({ message: translationText });  }
 };
 
 exports.getAllBooks = async (req, res) => {
@@ -147,10 +142,10 @@ exports.getAllBooks = async (req, res) => {
       .populate("borrower", "_id name role email")
       .populate("libraryId", "_id name");
 
-    return res.status(200).json(allbooks);
+    return res.status(200).json({message : res.__("success"),result : allbooks});
   } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
+    const translationText = translateTo(error) || res.__("serverError");
+    return res.status(500).json({ message: translationText });  }
 };
 
 exports.deleteBook = async (req, res) => {
@@ -159,8 +154,8 @@ exports.deleteBook = async (req, res) => {
     const deltetdImages = await book.images.map(deleteImageFromFirebaseUrl);
     const remove = await booksSchema.findByIdAndDelete(bookId);
 
-    return res.status(204).json({ message: "success" });
+    return res.status(204).json({ message: res.__("bookDeleted") });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
+    const translationText = translateTo(error) || res.__("serverError");
+    return res.status(500).json({ message: translationText });  }
 };

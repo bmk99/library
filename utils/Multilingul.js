@@ -1,3 +1,5 @@
+const {translate} = require('@vitalets/google-translate-api');
+
 const messages = {
   en: {
     serverError: "Server error",
@@ -27,3 +29,18 @@ function getMessage(req, key) {
   const language = "en"; // Default to English
   return messages[language][key];
 }
+
+async function translateTo(error, lang) {
+  const translationTextMessage =
+    lang == "en"
+      ? error.message
+      :  (await translate(translate, { to: lang })).text;
+  return translationTextMessage;
+}
+
+// function response(key) {
+//   const message = res.__(key)
+//   return message
+// }
+
+module.exports = { translateTo };

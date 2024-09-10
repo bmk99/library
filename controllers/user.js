@@ -1,6 +1,9 @@
 const jwt = require("jsonwebtoken");
 const userSchema = require("../models/User.js");
+const translate = require("@vitalets/google-translate-api");
+const {  translateTo } = require("../utils/Multilingul.js");
 
+// console.log(process.env.PORT)
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
     const user = await userSchema.findById(userId);
@@ -12,27 +15,26 @@ const generateAccessAndRefereshTokens = async (userId) => {
 
     return { accessToken, refreshToken };
   } catch (error) {
+    const translationText =
+      req.getLocale() == "en"
+        ? error.message
+        : (await translate(error.message, { to: req.getLocale() })).text;
     return res
       .status(500)
-      .json(
-        new ApiError(
-          500,
-          "Something went wrong while generating referesh and access token"
-        )
-      );
+      .json({ message: translationText || res.__("errorRegister") });
   }
 };
-
 const registerUser = async (req, res) => {
   try {
     const { name, email, password, address, role, phone } = req.body;
 
-    const existedUser = await userSchema.findOne({
-      email,
-    });
-    if (!existedUser) {
-      return res.status(209).json({ message: "User already exists" });
-    }
+    const existedUser = await userSchema.findOne({ email });
+
+    // if (existedUser) {
+    //   return res.status(209).json({ message: res.__("userExist") });
+    // }
+
+    // Create user
     const user = await userSchema.create({
       phone,
       email,
@@ -47,24 +49,38 @@ const registerUser = async (req, res) => {
       .select("-password -refreshToken");
 
     if (!createdUser) {
-      return res
-        .status(500)
-        .json({ message: "something went wrong while registering" });
+      return res.status(500).json({ message: res.__("errorRegister") });
     }
 
     return res
       .status(201)
-      .json({ message: "user created succesfully ", result: createdUser });
+      .json({ message: res.__("userCreated"), result: createdUser });
   } catch (error) {
     console.log(error);
-    console.log(Object.keys(error.keyValue));
+
+    // Handle duplicate entry error
     if (error.name == "MongoServerError" && error.code === 11000) {
       const field = Object.keys(error.keyValue)[0];
       const duplicateValue = error.keyValue[field];
-      const message = `The ${field} '${duplicateValue}' is already registered. Please use a different ${field}.`;
-      return res.status(400).json({ message });
+      const message = res.__("duplicateExist", {
+        field: field,
+        duplicateValue: duplicateValue,
+      });
+      return res.status(400).json({ message: message });
     }
-    return res.status(500).json({ error: error.message });
+
+    // Handle validation error
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((err) => err.message);
+
+      console.log(errors.join(""));
+
+      return res.status(400).json({ message: errors.join(", ") });
+    }
+
+    const errorMessage = translateTo(error, req.getLocale());
+
+    return res.status(500).json({ error: errorMessage });
   }
 };
 
@@ -73,17 +89,17 @@ const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email && !password) {
-      return res.status(500).json({ messages: "both required" });
+      return res.status(500).json({ messages: res.__("required") });
     }
 
     const user = await userSchema.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ message: "user not found" });
+      return res.status(404).json({ message: res.__("notfound") });
     }
     const isPasswordValid = await user.isPasswordCorrect(password);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "invalid user details" });
+      return res.status(401).json({ message: res.__("invalidData") });
     }
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
       user._id
@@ -96,45 +112,59 @@ const loginUser = async (req, res) => {
       httpOnly: true,
       secure: true,
     };
+    // cookies.set("lang","en")
 
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", refreshToken, options)
       .json({
-        message: "Succesfully ",
-        user: loggedInUser,
+        message: res.__("success"),
+        result: loggedInUser,
         accessToken,
         refreshToken,
       });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    console.log({error});
+    const errorMessage = translateTo(error, req.getLocale());
+    console.log(errorMessage)
+    // const translationText =
+    //   req.getLocale() == "en"
+    //     ? error.message
+    //     : (await translate(error.message, { to: req.getLocale() })).text || res.__("serverError");
+    return res
+      .status(500)
+      .json({ message: errorMessage || res.__("serverError") });
   }
 };
 
 const logoutUser = async (req, res) => {
-  await userSchema.findByIdAndUpdate(
-    req.user._id,
-    {
-      $unset: {
-        refreshToken: 1, // this removes the field from document
+  try {
+    await userSchema.findByIdAndUpdate(
+      req.user._id,
+      {
+        $unset: {
+          refreshToken: 1, // this removes the field from document
+        },
       },
-    },
-    {
-      new: true,
-    }
-  );
+      {
+        new: true,
+      }
+    );
 
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
 
-  return res
-    .status(205)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json({ message: "Logout succesfully " });
+    return res
+      .status(205)
+      .clearCookie("accessToken", options)
+      .clearCookie("refreshToken", options)
+      .json({ message: res.__("logout") });
+  } catch (error) {
+    return res.status(500).json({ messages: error.message });
+  }
 };
 
 const refreshAccessToken = async (req, res) => {
@@ -154,11 +184,11 @@ const refreshAccessToken = async (req, res) => {
     const user = await userSchema.findById(decodedToken?._id);
 
     if (!user) {
-      throw new ApiError(401, "Invalid refresh token");
+      return res.status(401).json({ message: res.__("invalidToken") });
     }
 
     if (incomingRefreshToken !== user?.refreshToken) {
-      throw new ApiError(401, "Refresh token is expired or used");
+      return res.status(404).json({ message: res.__("refreshExpired") });
     }
 
     const options = {
@@ -174,12 +204,19 @@ const refreshAccessToken = async (req, res) => {
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", newRefreshToken, options)
       .json({
-        message: "Access token refreshed",
+        message: res.__("tokenRefresh"),
         accessToken,
         refreshToken: newRefreshToken,
       });
   } catch (error) {
-    return res.status(401).json({message : error?.message || "Invalid refresh token"});
+    const translationText =
+      req.getLocale() == "en"
+        ? error.message
+        : (await translate(error.message, { to: req.getLocale() })).text;
+
+    return res
+      .status(401)
+      .json({ message: error?.message || "Invalid refresh token" });
   }
 };
 

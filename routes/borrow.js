@@ -9,7 +9,7 @@ router.param("bookId", async (req, res, next) => {
   const id = req.params.bookId;
   const book = await bookSchema.exists({_id : id});
   if (!book) {
-    return res.status(404).json({ message: "Not found " });
+    return res.status(404).json({ message: res.__("notFound") });
   }
   next();
 });
