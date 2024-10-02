@@ -49,7 +49,7 @@ const checkRole = async (req, res, next) => {
         ? error.message
         : (await translate(error.message, { to: req.getLocale() })).text;
 
-    return res.staus(500).json({ message: translationText || res.__unauthorized});
+    return res.status(500).json({ message: translationText || res.__unauthorized});
   }
 };
 module.exports = { authentication, checkRole };
